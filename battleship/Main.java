@@ -1,8 +1,6 @@
 package battleship;
 
-import javax.swing.*;
 import java.util.*;
-import java.util.function.ToDoubleBiFunction;
 
 class Ship {
     String name;
@@ -67,45 +65,59 @@ public class Main {
     );
 
     // List to store invalid positions
-    static List<String> invalidCells = new ArrayList<>();
+    static List<String> invalidCells1 = new ArrayList<>();
+    static List<String> invalidCells2 = new ArrayList<>();
+
+    static int turn = 1;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        String[][] field = new String[11][11];
-        String[][] fogOfWar = new String[11][11];
+        String[][] field1 = new String[11][11];
+        String[][] field2 = new String[11][11];
+        String[][] fogOfWar1 = new String[11][11];
+        String[][] fogOfWar2 = new String[11][11];
 
         for (int i = 0; i < 11; i++) {
             for (int j = 0; j < 11; j++) {
                 if (i == 0 && j == 0) {
-                    field[i][j] = "";
-                    fogOfWar[i][j] = "";
+                    field1[i][j] = "";
+                    field2[i][j] = "";
+                    fogOfWar1[i][j] = "";
+                    fogOfWar2[i][j] = "";
                     continue;
                 }
 
                 if (i == 0) {
-                    field[i][j] = String.valueOf(j);
-                    fogOfWar[i][j] = String.valueOf(j);
+                    field1[i][j] = String.valueOf(j);
+                    field2[i][j] = String.valueOf(j);
+                    fogOfWar1[i][j] = String.valueOf(j);
+                    fogOfWar2[i][j] = String.valueOf(j);
                     continue;
                 }
 
                 if (j == 0) {
-                    field[i][j] = String.valueOf(conversor.get(i - 1));
-                    fogOfWar[i][j] = String.valueOf(conversor.get(i - 1));
+                    field1[i][j] = String.valueOf(conversor.get(i - 1));
+                    field2[i][j] = String.valueOf(conversor.get(i - 1));
+                    fogOfWar1[i][j] = String.valueOf(conversor.get(i - 1));
+                    fogOfWar2[i][j] = String.valueOf(conversor.get(i - 1));
                     continue;
                 }
 
-                field[i][j] = "~";
-                fogOfWar[i][j] = "~";
+                field1[i][j] = "~";
+                field2[i][j] = "~";
+                fogOfWar1[i][j] = "~";
+                fogOfWar2[i][j] = "~";
             }
         }
 
-        printField(field);
-
-        Fleet fleet = new Fleet();
+        Fleet fleet1 = new Fleet();
+        Fleet fleet2 = new Fleet();
 
         // Ship placement loop
-        for (Ship ship : fleet.getShips()) {
+        System.out.println("Player 1, place your ships on the game field\n");
+        printField(field1);
+        for (Ship ship : fleet1.getShips()) {
             System.out.printf("Enter the coordinates of the %s (%d cells):", ship.name, ship.length);
 
             boolean shipPlaced = false;
@@ -121,7 +133,7 @@ public class Main {
                 int secondColumn = Integer.parseInt(secondCoord.substring(1));
 
                 Optional<String> placementError = checkShipPlacement(firstRow, firstColumn, secondRow, secondColumn,
-                        ship.length, field, ship.name);
+                        ship.length, field1, ship.name, invalidCells1);
 
                 if (placementError.isPresent()) {
                     System.out.println(placementError.get());
@@ -165,7 +177,7 @@ public class Main {
                     for (String part : ship.parts) {
                         int row = part.substring(0, 1).charAt(0) - 'A';
                         int col = Integer.parseInt(part.substring(1)) - 1;
-                        field[row + 1][col + 1] = "O";
+                        field1[row + 1][col + 1] = "O";
                     }
 
                     // Define directions to check (vertically, horizontally, and diagonally)
@@ -183,19 +195,19 @@ public class Main {
                             int newCol = col + dCol[i];
 
                             // Ensure the cell is within bounds before adding it to the invalid list
-                            if (newRow > 0 && newRow <= field.length - 1 && newCol > 0 && newCol <= field[0].length - 1) {
+                            if (newRow > 0 && newRow <= field1.length - 1 && newCol > 0 && newCol <= field1[0].length - 1) {
                                 String invalidCoord = String.valueOf((char) ('A' + newRow - 1)) + newCol;
 
                                 // Avoid duplicates
-                                if (!invalidCells.contains(invalidCoord)) {
-                                    invalidCells.add(invalidCoord);
+                                if (!invalidCells1.contains(invalidCoord)) {
+                                    invalidCells1.add(invalidCoord);
                                 }
                             }
                         }
                     }
                     shipPlaced = true;
 
-                    for (String[] row : field) {
+                    for (String[] row : field1) {
                         for (int i = 0; i < row.length; i++) {
                             System.out.print(row[i] + " ");
                         }
@@ -204,12 +216,129 @@ public class Main {
                 }
             } while (!shipPlaced);
         }
+        System.out.println("Press Enter and pass the move to another player\n");
+        scanner.nextLine();
+        System.out.println("Player 2, place your ships on the game field\n");
+        printField(field2);
+        for (Ship ship : fleet2.getShips()) {
+            System.out.printf("Enter the coordinates of the %s (%d cells):", ship.name, ship.length);
 
-        System.out.println("The game starts!");
+            boolean shipPlaced = false;
 
-        printField(fogOfWar);
+            do {
+                String coords = scanner.nextLine().trim();
+                String firstCoord = coords.split(" ")[0];
+                String secondCoord = coords.split(" ")[1];
 
-        // Shooting loop
+                char firstRow = firstCoord.substring(0, 1).charAt(0);
+                int firstColumn = Integer.parseInt(firstCoord.substring(1));
+                char secondRow = secondCoord.substring(0, 1).charAt(0);
+                int secondColumn = Integer.parseInt(secondCoord.substring(1));
+
+                Optional<String> placementError = checkShipPlacement(firstRow, firstColumn, secondRow, secondColumn,
+                        ship.length, field2, ship.name, invalidCells2);
+
+                if (placementError.isPresent()) {
+                    System.out.println(placementError.get());
+                    continue;
+                } else {
+                    boolean isAscending;
+                    boolean isVertical = firstColumn == secondColumn;
+                    if (isVertical) {
+                        isAscending = firstRow < secondRow;
+                    } else {
+                        isAscending = firstColumn < secondColumn;
+                    }
+
+                    int max = isVertical ? Math.max(firstRow, secondRow) : Math.max(firstColumn, secondColumn);
+                    int min = isVertical ? Math.min(firstRow, secondRow) : Math.min(firstColumn, secondColumn);
+
+                    int length = max - min + 1;
+
+                    if (isVertical) {
+                        if (isAscending) {
+                            for (int i = 0; i < length; i++) {
+                                ship.parts[i] = String.valueOf((char) (firstRow + i)) + (firstColumn);
+                            }
+                        } else {
+                            for (int i = 0; i < length; i++) {
+                                ship.parts[i] = String.valueOf((char) (firstRow - i)) + (firstColumn);
+                            }
+                        }
+                    } else {
+                        if (isAscending) {
+                            for (int i = 0; i < length; i++) {
+                                ship.parts[i] = String.valueOf(firstRow) + (firstColumn + i);
+                            }
+                        } else {
+                            for (int i = 0; i < length; i++) {
+                                ship.parts[i] = String.valueOf(firstRow) + (firstColumn - i);
+                            }
+                        }
+                    }
+
+                    for (String part : ship.parts) {
+                        int row = part.substring(0, 1).charAt(0) - 'A';
+                        int col = Integer.parseInt(part.substring(1)) - 1;
+                        field2[row + 1][col + 1] = "O";
+                    }
+
+                    // Define directions to check (vertically, horizontally, and diagonally)
+                    int[] dRow = {-1, -1, -1, 0, 1, 1, 1, 0};
+                    int[] dCol = {-1, 0, 1, 1, 1, 0, -1, -1};
+
+                    // Iterate through each part of the ship
+                    for (String part : ship.parts) {
+                        int row = part.charAt(0) - 'A' + 1; // Convert letter to row index
+                        int col = Integer.parseInt(part.substring(1)); // Extract column number
+
+                        // Check all 8 surrounding directions
+                        for (int i = 0; i < 8; i++) {
+                            int newRow = row + dRow[i];
+                            int newCol = col + dCol[i];
+
+                            // Ensure the cell is within bounds before adding it to the invalid list
+                            if (newRow > 0 && newRow <= field2.length - 1 && newCol > 0 && newCol <= field2[0].length - 1) {
+                                String invalidCoord = String.valueOf((char) ('A' + newRow - 1)) + newCol;
+
+                                // Avoid duplicates
+                                if (!invalidCells2.contains(invalidCoord)) {
+                                    invalidCells2.add(invalidCoord);
+                                }
+                            }
+                        }
+                    }
+                    shipPlaced = true;
+
+                    for (String[] row : field2) {
+                        for (int i = 0; i < row.length; i++) {
+                            System.out.print(row[i] + " ");
+                        }
+                        System.out.println();
+                    }
+                }
+            } while (!shipPlaced);
+        }
+        System.out.println("Press Enter and pass the move to another player\n");
+        scanner.nextLine();
+
+        // GAME START
+        do {
+            System.out.println(playTurn(turn,
+                    (turn == 1) ? field1 : field2,
+                    (turn == 1) ? field2 : field1,
+                    (turn == 1) ? fogOfWar1 : fogOfWar2,
+                    (turn == 1) ? fogOfWar2 : fogOfWar1,
+                    (turn == 1) ? fleet2 : fleet1,
+                    scanner));
+            scanner.nextLine();
+            if (!fleet1.allShipsSunk() && !fleet2.allShipsSunk()) {
+                turn = (turn == 1) ? 2 : 1;
+            }
+
+        } while (!fleet1.allShipsSunk() && !fleet2.allShipsSunk());
+
+       /* Shooting loop
         System.out.println("Take a shot!");
         String message = "";
 
@@ -221,11 +350,12 @@ public class Main {
             message = checkShot(row, col, field, fogOfWar, fleet);
 
             System.out.println(message);
-        } while (!fleet.allShipsSunk());
+        } while (!fleet.allShipsSunk());*/
     }
 
     public static Optional<String> checkShipPlacement(char firstRow, int firstColumn, char secondRow, int secondColumn,
-                                                      int length, String[][] field, String shipName) {
+                                                      int length, String[][] field, String shipName,
+                                                      List<String> invalidCells) {
         if (isOutOfBounds(firstRow, firstColumn, secondRow, secondColumn) || isDiagonal(firstRow, firstColumn, secondRow, secondColumn)) {
             return Optional.of("Error! Wrong ship location! Try again:\n");
         }
@@ -324,20 +454,16 @@ public class Main {
         // Check if the cell was already hit or missed
         if (field[rowIndex + 1][colIndex + 1].equals("X")) {
             printField(fogOfWar);
-            return "You hit a ship! Try again:";
+            return "You hit a ship!";
         } else if (field[rowIndex + 1][colIndex + 1].equals("M")) {
             printField(fogOfWar);
-            return "You missed! Try again:";
+            return "You missed!";
         }
 
         for (Ship ship : fleet.getShips()) {
             if (ship.isSunk) {
                 continue;
             }
-            
-            // TODO: D8 is hit but player aims again and has to hit again and not change field
-
-            // TODO: add a Set so that no same coord can be shot twice
 
             for (int i = 0; i < ship.parts.length; i++) {
                 if (coords.equals(ship.parts[i])) {
@@ -356,18 +482,33 @@ public class Main {
                     }
 
                     return isShipSunk(ship.length, ship.hitCount) ? "You sank a ship! Specify a new target:" : "You " +
-                            "hit a ship! Try again:";
+                            "hit a ship!";
                 }
             }
         }
         field[rowIndex + 1][colIndex + 1] = "M";
         fogOfWar[rowIndex + 1][colIndex + 1] = "M";
         printField(fogOfWar);
-        return "You missed! Try again:";
+        return "You missed!";
     }
 
     public static boolean isShipSunk(int length, int hitCount) {
         return length == hitCount;
     }
 
+    public static String playTurn(int player, String[][] ownField, String[][] enemyField, String[][] ownFogOfWar,
+                                  String[][] enemyFogOfWar, Fleet enemyFleet,
+                                  Scanner scanner) {
+        printField(enemyFogOfWar);
+        System.out.println("---------------------\n");
+        printField(ownField);
+
+        System.out.printf("Player %d, it's your turn:\n", player);
+
+        String coord = scanner.nextLine();
+        char row = coord.charAt(0);
+        int col = Integer.parseInt(coord.substring(1));
+
+        return checkShot(row, col, enemyField, enemyFogOfWar, enemyFleet);
+    }
 }
